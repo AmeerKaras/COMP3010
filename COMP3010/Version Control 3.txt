@@ -1,0 +1,234 @@
+package assg1;
+
+import java.awt.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+
+
+
+class Index{
+	int x;
+	int y;
+	public Index(int x, int y){
+		this.x=x;
+		this.y=y;
+	}
+}
+
+class letter{
+	String l;
+	int posx;
+	int posy;
+	int num;
+	ArrayList<Index> loc = new ArrayList<>();
+	
+	public letter(String l, int y, int x, int n){
+		this.l = l;
+		this.posy = y;
+		this.posx = x;
+		this.num = n;
+	}
+}
+
+public class Solver {
+	
+	/** Global variables to instantiate the Width, Height and Number variables.
+	 *These variables will be given values from the readValue method
+	 */
+	HashSet<letter> set = new HashSet<>();
+	public static int W=0;
+	public static int H=0;
+	public static int N=0;
+	public HashMap<String, Integer> sections = new HashMap<>();
+	public HashMap<String, Integer> sectionsLimit = new HashMap<>();
+	public String[][]arr;
+
+	
+	
+	public static void main(String[] args) {
+		//Solver s = new Solver();
+		//s.solve(null);
+		//printArr(arr);
+	}
+	
+	/** The solve method accepts a String containing the 
+	 * path to the input file of a space partition problem
+	 * as described in the assignment specification and 
+	 * returns a two-dimensional String array containing 
+	 * the solution.
+	 * 
+	 * @param infile the input file containing the problem
+	 * @return solution to the space partition problem
+	 */
+	public String[][] solve(String infile){
+		
+		/*
+		 Here is a simple try-catch block for readData.
+		 If you don't know what try/catch and exceptions are,
+		 you don't have to worry about it for this unit, but
+		 it would be good if you can learn a bit of it.
+		*/
+		try {
+			arr = readData(infile);
+			Iterator<letter> itr = set.iterator();
+			while(itr.hasNext()){
+				letter b = itr.next();
+				//System.out.println(b.l + ": " + b.posx +" " +b.posy + " n:" + b.num + " Loc:" + b.l);
+				boolean solved = solveOdd(b, b.posy, b.posx);
+			}
+
+//			Set<String> keys = sections.keySet();
+//			for(String key : keys){
+//				System.out.println(key);
+//			}
+			
+
+			
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		printArr(arr);
+		return arr;
+	}
+	
+	
+	public boolean solveOdd(letter b, int y, int x){
+		int n = b.num;
+		Index tmp = new Index(y, x);
+		
+		if(n==0){
+			isRect(b);
+			return true;					
+		}
+		else if(y >= H||y < 0|| x >= W || x<0){
+			y = b.posy;
+			x = b.posx;
+			return false;
+		}
+		else if(sections.containsKey(arr[y][x]) && !arr[y][x].equals(b.l)){
+			return false;
+		}
+		else if(compareGrid(tmp) == true){
+			return false;
+		}
+		else{
+			arr[y][x] = b.l;
+			b.num--;
+			b.loc.add(tmp);
+			isRect(b);
+		}
+		
+		return solveOdd(b, y+1, x) || solveOdd(b, y-1, x) || solveOdd(b, y, x-1) || solveOdd(b, y, x+1);
+	}
+	
+
+	public static void printArr(String[][] arr){
+		for(int i = 0; i<arr.length; i++){
+			System.out.println("");
+			for(int j = 0; j<arr[0].length; j++){
+				System.out.print(arr[i][j]+ " ");
+			}
+		}
+		System.out.println("");
+	}
+	
+	public boolean compareLoc(Index tmp, letter b){
+		for(int i = 0; i<b.loc.size(); i++){
+			Index j = b.loc.get(i);
+			if(tmp.x == j.x && tmp.y == j.y){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean compareGrid(Index tmp){
+		for(letter x : set){
+			for(int i = 0; i < x.loc.size(); i++){
+				Index j = x.loc.get(i);
+				if(tmp.x == j.x && tmp.y == j.y){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean isRect(letter b){
+		for(int i = 0; i< b.loc.size(); i++){
+			Index j = b.loc.get(i);
+			System.out.println(j.y + " " + j.x);
+		}
+		return false;
+	}
+	
+	
+	/**
+	 * The readData method accepts a String containing the 
+	 * path to the input file containing the details of the
+	 * problem (size of grid, number of sections, etc). 
+	 * Please see the assignment specification for more information
+	 * on the input format.
+	 * 
+	 * You should use this method to populate this class with 
+	 * the information that you need to solve the problem.
+	 * 
+	 * I also recommend the use of Scanner class (I have written a
+	 * little bit for you to start with), but you may choose to
+	 * use something else. 
+	 * 
+	 * @param infile the input file containing the problem
+	 * @throws Exception if file is not found or there is input reading error
+	 */	
+	public String[][] readData(String infile) throws Exception{
+		String[][] rGrid = new String[W][H];
+		try{
+			FileReader txt = new FileReader(infile);
+			Scanner inputStream = new Scanner(txt);
+			W = inputStream.nextInt();
+			H = inputStream.nextInt();
+			N = inputStream.nextInt();
+			inputStream.nextLine();
+			
+			String[][] grid = new String[W][H];
+			
+						
+			for(int i = 0; i < N; i++){
+				String data = inputStream.nextLine();
+				String dataExtract[] = data.split(" ",2);
+				sections.put(dataExtract[0], Integer.parseInt(dataExtract[1].replaceAll("\\s+", "")));
+				sectionsLimit.put(dataExtract[0], Integer.parseInt(dataExtract[1].replaceAll("\\s+", "")));
+			}			
+			
+			for(int i=0;i<H;i++){
+				String data = inputStream.nextLine();
+				String st = data.replaceAll("\\s+", "");
+				for(int j = 0; j<W; j++){
+					String val = String.valueOf(st.charAt(j));
+					if(sections.containsKey(val)){
+						letter x = new letter(val, i, j, sections.get(val));
+						set.add(x);
+					}
+					grid[i][j] = val;//setting the letter to a specific space in the grid					
+				}
+				
+			}
+			inputStream.close();
+			rGrid = grid;
+			
+			
+		}catch(FileNotFoundException e){
+			System.out.println("mission failed");
+			e.printStackTrace();			
+		}		
+		return rGrid;		
+	}		
+	
+	
+}
